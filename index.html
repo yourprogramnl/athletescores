@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YP Atleten — Performance Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f0e;
+    --surface: #141716;
+    --card: #1a1d1b;
+    --border: #2a2e2c;
+    --accent: #b8f94e;
+    --accent2: #ff5e3a;
+    --text: #e8ede9;
+    --muted: #6b7570;
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #facc15;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND GRID */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(184,249,78,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(184,249,78,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 8vw, 72px);
+    letter-spacing: 4px;
+    color: var(--accent);
+    line-height: 1;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* WEIGHT INPUT CARD */
+  .weight-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .weight-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--accent);
+  }
+  .weight-card h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .weight-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .input-group {
+    flex: 1;
+    min-width: 180px;
+  }
+  .input-group label {
+    display: block;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .input-group input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    padding: 14px 16px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-group input:focus {
+    border-color: var(--accent);
+  }
+  .input-group input::placeholder { color: var(--muted); }
+  .lbs-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+    padding-bottom: 16px;
+  }
+  .lbs-display span { color: var(--accent); font-size: 18px; }
+
+  /* CATEGORY */
+  .category {
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .category.visible {
+    opacity: 1;
+    transform: none;
+  }
+  .cat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .cat-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .cat-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* EXERCISE ROW */
+  .exercise {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .exercise:hover { border-color: #3a3e3c; }
+
+  .exercise-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    align-items: center;
+  }
+  .ex-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .ex-formula {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-top: 3px;
+  }
+  .ex-badges {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .badge-target {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface);
+    padding: 4px 10px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+  }
+  .badge-target .val {
+    color: var(--yellow);
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  /* EXERCISE BODY */
+  .exercise-body {
+    padding: 0 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+  .exercise-body.open {
+    max-height: 260px;
+    padding: 0 20px 20px;
+  }
+  .score-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .score-input {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 120px;
+  }
+  .score-input label {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .score-input input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    padding: 10px 14px;
+    border-radius: 4px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .score-input input:focus { border-color: var(--accent); }
+  .score-input input::placeholder { color: var(--muted); }
+
+  .result-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+    align-self: flex-end;
+    padding-bottom: 4px;
+  }
+  .result-label {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .result-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: color 0.3s;
+  }
+  .result-value.above { color: var(--green); }
+  .result-value.below { color: var(--red); }
+  .result-value.close { color: var(--yellow); }
+
+  .pct-bar-wrap {
+    margin-top: 12px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .pct-bar {
+    height: 100%;
+    width: 0;
+    border-radius: 2px;
+    transition: width 0.5s ease, background 0.5s ease;
+  }
+
+  /* GAMES ATHLETES BADGE */
+  .games-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: rgba(184,249,78,0.04);
+    border: 1px solid rgba(184,249,78,0.15);
+    border-radius: 4px;
+  }
+  .games-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .games-label {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(184,249,78,0.6);
+    line-height: 1.3;
+  }
+  .games-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .games-diff {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* SUMMARY */
+  #summary {
+    display: none;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 32px;
+    margin-top: 40px;
+    margin-bottom: 60px;
+  }
+  #summary h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    margin-bottom: 24px;
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .summary-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    border-radius: 4px;
+  }
+  .stat-label {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 2px;
+  }
+  .stat-value.good { color: var(--green); }
+  .stat-value.bad { color: var(--red); }
+  .stat-value.neutral { color: var(--yellow); }
+
+  /* TOGGLE */
+  .ex-toggle {
+    color: var(--muted);
+    font-size: 18px;
+    transition: transform 0.3s;
+    user-select: none;
+  }
+  .exercise.open .ex-toggle { transform: rotate(45deg); color: var(--accent); }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0 20px;
+  }
+
+  .gender-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .gtbtn {
+    background: var(--surface);
+    color: var(--muted);
+    border: none;
+    padding: 10px 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .gtbtn + .gtbtn { border-left: 1px solid var(--border); }
+  .gtbtn.active {
+    background: var(--accent);
+    color: #0d0f0e;
+    font-weight: 600;
+  }
+  .gtbtn:hover:not(.active) { background: var(--card); color: var(--text); }
+
+  @media (max-width: 600px) {
+    .weight-row { flex-direction: column; }
+    .ex-badges { display: none; }
+    .score-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <span class="logo">YP ATLETEN</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:8px">
+      <span class="subtitle">Performance Tracker</span>
+      <div class="gender-toggle">
+        <button class="gtbtn active" id="btn-m" onclick="setGender('m')">♂ Mannen</button>
+        <button class="gtbtn" id="btn-v" onclick="setGender('v')">♀ Vrouwen</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- WEIGHT -->
+  <div class="weight-card">
+    <h2>Lichaamsgewicht</h2>
+    <div class="weight-row">
+      <div class="input-group">
+        <label>Gewicht (kg)</label>
+        <input type="number" id="bodyweight" placeholder="85" min="40" max="200" step="0.5">
+      </div>
+      <div class="lbs-display" id="lbs-display">— LBS</div>
+    </div>
+  </div>
+
+  <!-- EXERCISES -->
+  <div id="exercises-container"></div>
+
+  <!-- SUMMARY -->
+  <div id="summary">
+    <h2>Samenvatting</h2>
+    <div class="summary-grid" id="summary-grid"></div>
+  </div>
+</div>
+
+<script>
+const EXERCISES_M = [
+  {
+    cat: "Lower Strength",
+    items: [
+      { id: "backsquat",      name: "1 RM Back Squat",            formula: "2 × lichaamsgewicht",                             calc: bw => bw * 2,                                          games: 206 },
+      { id: "frontsquat",     name: "1 RM Front Squat",           formula: "1.7 × lichaamsgewicht → 85% van back squat",      calc: bw => bw * 1.7,                                        games: 183 },
+      { id: "ohsquat",        name: "Overhead Squat",             formula: "90% van Front Squat",                             calc: (bw, sc) => (sc.frontsquat || bw * 1.7) * 0.9,        games: 143 },
+      { id: "deadlift",       name: "Deadlift",                   formula: "125% van Back Squat",                             calc: (bw, sc) => (sc.backsquat || bw * 2) * 1.25,          games: 240 },
+      { id: "bulgariansplit", name: "8 RM Bulgarian Split Squat", formula: "45% per hand van lichaamsgewicht",                calc: bw => bw * 0.45 },
+    ]
+  },
+  {
+    cat: "Weightlifting",
+    items: [
+      { id: "powerclean",  name: "1 RM Power Clean",   formula: "1.4 × lichaamsgewicht / 70% van Back Squat", calc: bw => bw * 1.4,                                              games: 143 },
+      { id: "powersnatch", name: "1 RM Power Snatch",  formula: "1.1 × lichaamsgewicht",                      calc: bw => bw * 1.1,                                              games: 111 },
+      { id: "cleanjerk",   name: "1 RM Clean & Jerk",  formula: "90% van Front Squat",                        calc: (bw, sc) => (sc.frontsquat || bw * 1.7) * 0.9,             games: 158 },
+      { id: "snatch",      name: "1 RM Snatch",        formula: "1.3 × lichaamsgewicht",                      calc: bw => bw * 1.3,                                              games: 130 },
+      { id: "thruster",    name: "1 RM Thruster",      formula: "75% van Front Squat",                        calc: (bw, sc) => (sc.frontsquat || bw * 1.7) * 0.75,            games: 134 },
+      { id: "splitjerk",   name: "Split Jerk",         formula: "110% van Squat Clean",                       calc: (bw, sc) => (sc.squatclean || bw * 1.6) * 1.1,             games: 160 },
+      { id: "squatclean",  name: "1 RM Squat Clean",   formula: "1.6 × lichaamsgewicht",                      calc: bw => bw * 1.6,                                              games: 162 },
+    ]
+  },
+  {
+    cat: "Upper Strength",
+    items: [
+      { id: "m_closegrip",   name: "1 RM Close Grip Bench Press", formula: "100% van Power Clean",            calc: (bw, sc) => sc.powerclean || bw * 1.4,                      games: 143 },
+      { id: "m_strictpress", name: "Strict Barbell Press",        formula: "65% van Weighted Pull-up",        calc: (bw, sc) => (sc.m_weightedpu || bw * 1.5) * 0.65,           games: 91  },
+    ]
+  },
+  {
+    cat: "Gymnastics",
+    items: [
+      { id: "stricthspu", name: "Strict HSPU",          formula: "Max herhalingen — doel: 10+ reps",          calc: () => 10,                            unit: "reps" },
+      { id: "strictmu",   name: "Strict Muscle Up",     formula: "Max herhalingen — doel: 5+",                calc: () => 5,                             unit: "reps" },
+      { id: "rmu30",      name: "30 RMU for Time",      formula: "Doel: < 3:00 min",                          calc: () => "3:00",                        isTime: true },
+      { id: "maxrmu",     name: "Max Unbroken RMU",     formula: "9% van lichaamsgewicht in LBS",             calc: bw => bw * 2.2046 * 0.09,           unit: "reps" },
+    ]
+  },
+  {
+    cat: "Barbell Tester",
+    items: [
+      { id: "backsquat85", name: "Back Squat 85% (Reps)",      formula: "Doel: 6+ reps",         calc: () => 6,      unit: "reps" },
+      { id: "amrappc",     name: "8 min AMRAP Power Clean",    formula: "Doel: 24+ reps",        calc: () => 24,     unit: "reps" },
+      { id: "snatch25",    name: "Snatch 25 Reps for Time",    formula: "Doel: sub 5:00 min",    calc: () => "5:00", isTime: true },
+    ]
+  },
+  {
+    cat: "CrossFit Tester",
+    items: [
+      { id: "amrap18", name: "18 min AMRAP (Reps)", formula: "Elite: 500+ reps / Goed: 430–500 reps", calc: () => 500, unit: "reps" },
+    ]
+  },
+  {
+    cat: "Conditie Tester",
+    items: [
+      { id: "echobike", name: "10 min Echo Bike (Cal)", formula: "2 × lichaamsgewicht (Cal)",               calc: bw => bw * 2, unit: "cal" },
+      { id: "row60",    name: "60 min Row (Meters)",    formula: "17.000m na bodyweight correctie",          calc: () => 17000,  unit: "m"   },
+      { id: "run3k",    name: "3K Run",                 formula: "Excellent < 10:00 / Redelijk < 11:00",     calc: () => "11:00", isTime: true },
+    ]
+  }
+];
+
+const EXERCISES_V = [
+  {
+    cat: "Lower Strength",
+    items: [
+      { id: "backsquat", name: "1 RM Back Squat", formula: "2 × lichaamsgewicht", calc: bw => bw * 2 },
+      { id: "frontsquat", name: "1 RM Front Squat", formula: "1.7 × lichaamsgewicht → 85% van back squat", calc: bw => bw * 1.7 },
+      { id: "ohsquat", name: "Overhead Squat", formula: "90% van Front Squat", calc: (bw, sc) => (sc.frontsquat || bw * 1.7) * 0.9 },
+      { id: "deadlift", name: "Deadlift", formula: "125% van Back Squat", calc: (bw, sc) => (sc.backsquat || bw * 2) * 1.25 },
+      { id: "bulgariansplit", name: "8 RM Bulgarian Split Squat", formula: "45% per hand van lichaamsgewicht", calc: bw => bw * 0.45 },
+    ]
+  },
+  {
+    cat: "Weightlifting",
+    items: [
+      { id: "powerclean", name: "1 RM Power Clean", formula: "1.4 × lichaamsgewicht / 70% van Back Squat", calc: bw => bw * 1.4 },
+      { id: "powersnatch", name: "1 RM Power Snatch", formula: "1.1 × lichaamsgewicht", calc: bw => bw * 1.1 },
+      { id: "cleanjerk", name: "1 RM Clean & Jerk", formula: "90% van Front Squat", calc: (bw, sc) => (sc.frontsquat || bw * 1.7) * 0.9 },
+      { id: "snatch", name: "1 RM Snatch", formula: "1.3 × lichaamsgewicht", calc: bw => bw * 1.3 },
+      { id: "thruster", name: "1 RM Thruster", formula: "75% van Front Squat", calc: (bw, sc) => (sc.frontsquat || bw * 1.7) * 0.75 },
+      { id: "splitjerk", name: "Split Jerk", formula: "110% van Squat Clean", calc: (bw, sc) => (sc.squatclean || bw * 1.6) * 1.1 },
+      { id: "squatclean", name: "1 RM Squat Clean", formula: "1.6 × lichaamsgewicht", calc: bw => bw * 1.6 },
+    ]
+  },
+  {
+    cat: "Upper Strength",
+    items: [
+      { id: "closegrip", name: "1 RM Close Grip Bench Press", formula: "100% van Power Clean", calc: (bw, sc) => sc.powerclean || bw * 1.4 },
+      { id: "strictpress", name: "Strict Barbell Press", formula: "65% van Weighted Pull-up", calc: (bw, sc) => (sc.weightedpu || bw * 1.5) * 0.65 },
+      { id: "shoulderpress6", name: "6 RM Shoulder Press", formula: "29% per arm van Close Grip Bench Press", calc: (bw, sc) => (sc.closegrip || bw * 1.4) * 0.29 },
+      { id: "pronerow6", name: "6 RM Prone Row", formula: "50% van lichaamsgewicht per arm", calc: bw => bw * 0.5 },
+      { id: "weightedpu", name: "Weighted Pull-up", formula: "1.5 × lichaamsgewicht", calc: bw => bw * 1.5 },
+      { id: "weighteddip", name: "Weighted Dip", formula: "1.5 × lichaamsgewicht", calc: bw => bw * 1.5 },
+    ]
+  },
+  {
+    cat: "Odd Objects",
+    items: [
+      { id: "yokecarry", name: "20 M Yoke Carry", formula: "150% van Back Squat", calc: (bw, sc) => (sc.backsquat || bw * 2) * 1.5 },
+      { id: "ohyoke", name: "20 M Overhead Yoke Carry", formula: "100% van 1 RM Snatch", calc: (bw, sc) => sc.snatch || bw * 1.3 },
+      { id: "farmercarry", name: "20 M Farmer Carry", formula: "1 RM Deadlift", calc: (bw, sc) => sc.deadlift || (sc.backsquat || bw * 2) * 1.25 },
+      { id: "sandbag", name: "80 M Sandbag Carry", formula: "60% van Deadlift", calc: (bw, sc) => (sc.deadlift || (sc.backsquat || bw * 2) * 1.25) * 0.6 },
+    ]
+  },
+  {
+    cat: "Gymnastics",
+    items: [
+      { id: "hspu5min", name: "5 min Strict HSPU", formula: "Doel: 60 reps", calc: () => 60, unit: "reps" },
+      { id: "pu5min", name: "5 min Strict Pull-up", formula: "Doel: 60 reps", calc: () => 60, unit: "reps" },
+      { id: "rmu30", name: "30 RMU for Time", formula: "Doel: < 3:30 min", calc: () => "3:30", isTime: true },
+      { id: "maxrmu", name: "Max Unbroken RMU", formula: "9% van lichaamsgewicht in LBS", calc: bw => bw * 2.2046 * 0.09, unit: "reps" },
+    ]
+  },
+  {
+    cat: "Barbell Tester",
+    items: [
+      { id: "backsquat85", name: "Back Squat 85% (Reps)", formula: "Doel: 7+ reps", calc: () => 7, unit: "reps" },
+      { id: "amrappc", name: "8 min AMRAP Power Clean", formula: "Doel: 32+ reps", calc: () => 32, unit: "reps" },
+      { id: "snatch25", name: "Snatch 25 Reps for Time", formula: "Doel: sub 4:59 min", calc: () => "4:59", isTime: true },
+    ]
+  },
+  {
+    cat: "CrossFit Tester",
+    items: [
+      { id: "amrap18", name: "18 min AMRAP (Reps)", formula: "Elite: 504+ reps / Goed: 432–503 reps", calc: () => 504, unit: "reps" },
+    ]
+  },
+  {
+    cat: "Conditie Tester",
+    items: [
+      { id: "echobike", name: "10 min Echo Bike (Cal)", formula: "2 × lichaamsgewicht (Cal)", calc: bw => bw * 2, unit: "cal" },
+      { id: "row60", name: "60 min Row (Meters)", formula: "17.000m na bodyweight correctie", calc: () => 17000, unit: "m" },
+      { id: "run3k", name: "3K Run", formula: "Excellent < 10:00 / Redelijk < 11:00", calc: () => "11:00", isTime: true },
+    ]
+  }
+];
+
+let currentGender = 'm';
+let scores = {};
+
+function setGender(g) {
+  if (g === currentGender) return;
+  currentGender = g;
+  scores = {};
+  document.getElementById('btn-m').classList.toggle('active', g === 'm');
+  document.getElementById('btn-v').classList.toggle('active', g === 'v');
+  document.getElementById('bodyweight').value = '';
+  document.getElementById('lbs-display').innerHTML = '— LBS';
+  document.getElementById('summary').style.display = 'none';
+  render();
+}
+
+function getExercises() {
+  return currentGender === 'm' ? EXERCISES_M : EXERCISES_V;
+}
+
+function getBW() {
+  return parseFloat(document.getElementById('bodyweight').value) || 0;
+}
+
+function getTarget(ex) {
+  const bw = getBW();
+  if (bw === 0) return null;
+  return ex.calc(bw, scores);
+}
+
+function formatNum(n, isTime) {
+  if (isTime) return n;
+  if (n === null || isNaN(n)) return '—';
+  return Math.round(n * 10) / 10 + ' kg';
+}
+
+function calcPct(score, target) {
+  if (!score || !target || typeof target !== 'number') return null;
+  return (score - target) / target;
+}
+
+function updateExercise(ex) {
+  const scoreEl = document.getElementById('score-' + ex.id);
+  const resultEl = document.getElementById('result-' + ex.id);
+  const barEl = document.getElementById('bar-' + ex.id);
+  const targetBadge = document.getElementById('target-' + ex.id);
+
+  const bw = getBW();
+  const target = getTarget(ex);
+
+  if (targetBadge) {
+    if (target && typeof target === 'number') {
+      const u = ex.unit || 'kg';
+      targetBadge.innerHTML = `<span class="val">${Math.round(target * 10) / 10} ${u}</span>`;
+    } else if (target) {
+      targetBadge.innerHTML = `<span class="val">${target}</span>`;
+    }
+  }
+
+  if (!scoreEl) return;
+  const scoreVal = parseFloat(scoreEl.value);
+  
+  if (!scoreVal || !target || typeof target !== 'number') {
+    if (resultEl) { resultEl.textContent = '—'; resultEl.className = 'result-value'; }
+    if (barEl) { barEl.style.width = '0'; }
+    return;
+  }
+
+  scores[ex.id] = scoreVal;
+  const pct = calcPct(scoreVal, target);
+  const pctStr = (pct >= 0 ? '+' : '') + Math.round(pct * 100) + '%';
+
+  if (resultEl) {
+    resultEl.textContent = pctStr;
+    if (pct >= 0) resultEl.className = 'result-value above';
+    else if (pct > -0.05) resultEl.className = 'result-value close';
+    else resultEl.className = 'result-value below';
+  }
+
+  if (barEl) {
+    const width = Math.min(100, Math.max(0, (scoreVal / target) * 100));
+    barEl.style.width = width + '%';
+    barEl.style.background = pct >= 0 ? 'var(--green)' : pct > -0.1 ? 'var(--yellow)' : 'var(--red)';
+  }
+
+  // Games athletes diff
+  const gamesDiffEl = document.getElementById('gamesdiff-' + ex.id);
+  if (gamesDiffEl && ex.games) {
+    const diff = Math.round(scoreVal - ex.games);
+    gamesDiffEl.textContent = (diff >= 0 ? '+' : '') + diff + ' kg';
+    gamesDiffEl.style.color = diff >= 0 ? 'var(--green)' : 'var(--muted)';
+  }
+
+  updateSummary();
+}
+
+function updateSummary() {
+  const bw = getBW();
+  if (!bw) return;
+
+  let filled = 0, above = 0, below = 0, totalPct = 0;
+
+  getExercises().forEach(cat => {
+    cat.items.forEach(ex => {
+      const scoreEl = document.getElementById('score-' + ex.id);
+      if (!scoreEl) return;
+      const scoreVal = parseFloat(scoreEl.value);
+      const target = getTarget(ex);
+      if (!scoreVal || !target || typeof target !== 'number') return;
+      filled++;
+      const pct = calcPct(scoreVal, target);
+      totalPct += pct;
+      if (pct >= 0) above++; else below++;
+    });
+  });
+
+  const summaryEl = document.getElementById('summary');
+  const gridEl = document.getElementById('summary-grid');
+
+  if (filled === 0) { summaryEl.style.display = 'none'; return; }
+  summaryEl.style.display = 'block';
+
+  const avg = Math.round((totalPct / filled) * 100);
+  gridEl.innerHTML = `
+    <div class="summary-stat">
+      <div class="stat-label">Ingevuld</div>
+      <div class="stat-value neutral">${filled}</div>
+    </div>
+    <div class="summary-stat">
+      <div class="stat-label">Boven doel</div>
+      <div class="stat-value good">${above}</div>
+    </div>
+    <div class="summary-stat">
+      <div class="stat-label">Onder doel</div>
+      <div class="stat-value bad">${below}</div>
+    </div>
+    <div class="summary-stat">
+      <div class="stat-label">Gemiddeld % van doel</div>
+      <div class="stat-value ${avg >= 0 ? 'good' : 'bad'}">${avg >= 0 ? '+' : ''}${avg}%</div>
+    </div>
+  `;
+}
+
+function render() {
+  const container = document.getElementById('exercises-container');
+  container.innerHTML = '';
+
+  getExercises().forEach((cat, ci) => {
+    const section = document.createElement('div');
+    section.className = 'category';
+    section.style.transitionDelay = (ci * 60) + 'ms';
+
+    const catHeader = `
+      <div class="cat-header">
+        <span class="cat-title">${cat.cat}</span>
+        <div class="cat-line"></div>
+      </div>`;
+
+    const items = cat.items.map((ex, ei) => {
+      const target = getTarget(ex);
+      const u = ex.unit || 'kg';
+      const targetStr = (target && typeof target === 'number') ? `${Math.round(target * 10) / 10} ${u}` : (target || '—');
+      return `
+        <div class="exercise" id="ex-${ex.id}">
+          <div class="exercise-header" onclick="toggleEx('${ex.id}')">
+            <div>
+              <div class="ex-name">${ex.name}</div>
+              <div class="ex-formula">${ex.formula}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="ex-badges">
+                <div class="badge-target" id="target-${ex.id}">
+                  Doel: <span class="val">${targetStr}</span>
+                </div>
+              </div>
+              <div class="ex-toggle">+</div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="exercise-body" id="body-${ex.id}">
+            <div style="height:16px"></div>
+            <div class="score-row">
+              <div class="score-input">
+                <label>Jouw score${ex.isTime ? ' (mm:ss)' : ' (' + (ex.unit || 'kg') + ')'}</label>
+                <input type="${ex.isTime ? 'text' : 'number'}" id="score-${ex.id}" placeholder="${ex.isTime ? '00:00' : '0'}" oninput="scores['${ex.id}']=this.value; updateExercise(exById('${ex.id}'))">
+              </div>
+              <div class="result-block">
+                <div class="result-label">vs Doel</div>
+                <div class="result-value" id="result-${ex.id}">—</div>
+              </div>
+            </div>
+            <div class="pct-bar-wrap">
+              <div class="pct-bar" id="bar-${ex.id}"></div>
+            </div>
+            ${ex.games ? `
+            <div class="games-block">
+              <span class="games-icon">🏆</span>
+              <span class="games-label">Games Athletes</span>
+              <span class="games-val">${ex.games} kg</span>
+              <span class="games-diff" id="gamesdiff-${ex.id}"></span>
+            </div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+
+    section.innerHTML = catHeader + items;
+    container.appendChild(section);
+  });
+
+  // Animate in
+  setTimeout(() => {
+    document.querySelectorAll('.category').forEach(el => el.classList.add('visible'));
+  }, 50);
+}
+
+function toggleEx(id) {
+  const ex = document.getElementById('ex-' + id);
+  const body = document.getElementById('body-' + id);
+  const isOpen = ex.classList.contains('open');
+  ex.classList.toggle('open', !isOpen);
+  body.classList.toggle('open', !isOpen);
+  if (!isOpen) {
+    const inp = document.getElementById('score-' + id);
+    if (inp) setTimeout(() => inp.focus(), 300);
+  }
+}
+
+function exById(id) {
+  for (const cat of [...EXERCISES_M, ...EXERCISES_V]) {
+    const found = cat.items.find(e => e.id === id);
+    if (found) return found;
+  }
+}
+
+// BW change
+document.getElementById('bodyweight').addEventListener('input', function() {
+  const bw = parseFloat(this.value) || 0;
+  const lbs = Math.round(bw * 2.2046 * 10) / 10;
+  document.getElementById('lbs-display').innerHTML = bw ? `<span>${lbs}</span> LBS` : '— LBS';
+  render(); // re-render targets
+  // restore scores
+  Object.keys(scores).forEach(id => {
+    const inp = document.getElementById('score-' + id);
+    if (inp && scores[id]) { inp.value = scores[id]; updateExercise(exById(id)); }
+  });
+});
+
+render();
+</script>
+</body>
+</html>
